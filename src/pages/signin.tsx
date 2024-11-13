@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AuthService } from "@/services/auth";
 import { Box, TextField, Button, Typography } from "@mui/material";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -56,6 +57,9 @@ export default function SignIn() {
         <Button onClick={handleSignIn} variant="contained">
           Entrar
         </Button>
+        <Typography>
+          Não possui uma conta? <Link href="/signup">Crie uma agora.</Link>
+        </Typography>
       </Box>
     </Box>
   );
