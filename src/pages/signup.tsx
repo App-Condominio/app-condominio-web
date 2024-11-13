@@ -4,18 +4,20 @@ import { useState } from "react";
 import { AuthService } from "@/services/auth";
 import { Box, TextField, Button, Typography } from "@mui/material";
 import { CondominiumService } from "@/services/condominium";
+import { useRouter } from "next/router";
 
 export default function SignUp() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleSignUp = async () => {
     try {
       const user = await AuthService.signUp(email, password);
       await CondominiumService.createOrUpdate({ name }, user.user.uid);
-      alert("Successfully signed up!");
+      router.replace("/dashboard");
     } catch (error) {
       setError(error.message);
     }
