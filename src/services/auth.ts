@@ -1,4 +1,3 @@
-// services/authService.js
 import { auth } from "@/config/firebaseClient";
 import {
   signInWithEmailAndPassword,
@@ -19,6 +18,7 @@ export const AuthService = {
   resetPassword: (email: string) => {
     return sendPasswordResetEmail(auth, email);
   },
+
   signOut: () => {
     return firebaseSignOut(auth);
   },

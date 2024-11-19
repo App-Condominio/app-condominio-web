@@ -1,6 +1,12 @@
 "use client";
-import * as React from "react";
-import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
+import React, { useState } from "react";
+import {
+  styled,
+  useTheme,
+  Theme,
+  CSSObject,
+  PaletteMode,
+} from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import MuiDrawer from "@mui/material/Drawer";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
@@ -10,23 +16,27 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import * as Icons from "@mui/icons-material";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import Home from "@mui/icons-material/Home";
-import Notifications from "@mui/icons-material/Notifications";
-import ExitToApp from "@mui/icons-material/ExitToApp";
-import Settings from "@mui/icons-material/Settings";
-import LightMode from "@mui/icons-material/LightMode";
-import DarkMode from "@mui/icons-material/DarkMode";
 import { useRouter } from "next/router";
 import { AuthService } from "@/services/auth";
+import { User } from "firebase/auth";
 
 const drawerWidth = 240;
+
+interface AppBarProps extends MuiAppBarProps {
+  open?: boolean;
+}
+
+interface LayoutProps {
+  user: User | null;
+  children: React.ReactNode;
+  setTheme: React.Dispatch<React.SetStateAction<PaletteMode | undefined>>;
+  currentTheme: PaletteMode | undefined;
+}
 
 const openedMixin = (theme: Theme): CSSObject => ({
   width: drawerWidth,
@@ -57,10 +67,6 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   // necessary for content to be below app bar
   ...theme.mixins.toolbar,
 }));
-
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean;
-}
 
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== "open",
@@ -110,9 +116,14 @@ const Drawer = styled(MuiDrawer, {
   ],
 }));
 
-export default function Layout({ user, children, setTheme, currentTheme }) {
+export default function Layout({
+  user,
+  children,
+  setTheme,
+  currentTheme,
+}: LayoutProps) {
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -128,23 +139,28 @@ export default function Layout({ user, children, setTheme, currentTheme }) {
     {
       title: "Início",
       path: "/dashboard",
-      icon: <Home />,
+      icon: <Icons.Home />,
     },
     {
       title: "Configurações",
       path: "/settings",
-      icon: <Settings />,
+      icon: <Icons.Settings />,
     },
     {
-      title: "Notificações",
-      path: "/notifications",
-      icon: <Notifications />,
+      title: "Notícias",
+      path: "/newsletters",
+      icon: <Icons.Newspaper />,
+    },
+    {
+      title: "Documentos",
+      path: "/files",
+      icon: <Icons.UploadFile />,
     },
     {
       title: "Sair",
       path: null,
       trigger: () => handleSignOut(),
-      icon: <ExitToApp />,
+      icon: <Icons.ExitToApp />,
     },
   ];
 
@@ -177,7 +193,7 @@ export default function Layout({ user, children, setTheme, currentTheme }) {
               open && { display: "none" },
             ]}
           >
-            <MenuIcon />
+            <Icons.Menu />
           </IconButton>
           <Box
             sx={{
@@ -192,9 +208,9 @@ export default function Layout({ user, children, setTheme, currentTheme }) {
             </Typography>
             <IconButton color="inherit" onClick={handleDrawerOpen}>
               {currentTheme === "light" ? (
-                <DarkMode onClick={() => setTheme("dark")} />
+                <Icons.DarkMode onClick={() => setTheme("dark")} />
               ) : (
-                <LightMode onClick={() => setTheme("light")} />
+                <Icons.LightMode onClick={() => setTheme("light")} />
               )}
             </IconButton>
           </Box>
@@ -204,9 +220,9 @@ export default function Layout({ user, children, setTheme, currentTheme }) {
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
             {theme.direction === "rtl" ? (
-              <ChevronRightIcon />
+              <Icons.ChevronRight />
             ) : (
-              <ChevronLeftIcon />
+              <Icons.ChevronLeft />
             )}
           </IconButton>
         </DrawerHeader>
@@ -223,47 +239,21 @@ export default function Layout({ user, children, setTheme, currentTheme }) {
             >
               <ListItemButton
                 sx={[
-                  {
-                    minHeight: 48,
-                    px: 2.5,
-                  },
-                  open
-                    ? {
-                        justifyContent: "initial",
-                      }
-                    : {
-                        justifyContent: "center",
-                      },
+                  { minHeight: 48, px: 2.5 },
+                  { justifyContent: open ? "initial" : "center" },
                 ]}
               >
                 <ListItemIcon
                   sx={[
-                    {
-                      minWidth: 0,
-                      justifyContent: "center",
-                    },
-                    open
-                      ? {
-                          mr: 3,
-                        }
-                      : {
-                          mr: "auto",
-                        },
+                    { minWidth: 0, justifyContent: "center" },
+                    { mr: open ? 3 : "auto" },
                   ]}
                 >
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText
                   primary={item.title}
-                  sx={[
-                    open
-                      ? {
-                          opacity: 1,
-                        }
-                      : {
-                          opacity: 0,
-                        },
-                  ]}
+                  sx={[{ opacity: open ? 1 : 0 }]}
                 />
               </ListItemButton>
             </ListItem>
