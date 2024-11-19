@@ -7,17 +7,32 @@ import { useState } from "react";
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   const user = useAuthListener();
-  const [theme, setTheme] = useState<PaletteMode | undefined>("light");
+  const [theme, setTheme] = useState<PaletteMode | undefined>(() => {
+    if (typeof window !== "undefined") {
+      const storageTheme = localStorage.getItem("theme");
+      return (storageTheme as PaletteMode) || "dark";
+    }
+  });
+
   const darkTheme = createTheme({
     palette: {
       mode: theme,
     },
   });
 
+  const handleThemeChange = (theme: PaletteMode) => {
+    setTheme(theme);
+    localStorage.setItem("theme", theme);
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <Layout user={user} setTheme={setTheme} currentTheme={theme}>
+      <Layout
+        user={user}
+        currentTheme={theme}
+        onThemeChange={handleThemeChange}
+      >
         <Component {...pageProps} />
       </Layout>
     </ThemeProvider>

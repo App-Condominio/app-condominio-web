@@ -34,7 +34,7 @@ interface AppBarProps extends MuiAppBarProps {
 interface LayoutProps {
   user: User | null;
   children: React.ReactNode;
-  setTheme: React.Dispatch<React.SetStateAction<PaletteMode | undefined>>;
+  onThemeChange: (theme: PaletteMode) => void;
   currentTheme: PaletteMode | undefined;
 }
 
@@ -119,8 +119,8 @@ const Drawer = styled(MuiDrawer, {
 export default function Layout({
   user,
   children,
-  setTheme,
   currentTheme,
+  onThemeChange,
 }: LayoutProps) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
@@ -208,9 +208,9 @@ export default function Layout({
             </Typography>
             <IconButton color="inherit" onClick={handleDrawerOpen}>
               {currentTheme === "light" ? (
-                <Icons.DarkMode onClick={() => setTheme("dark")} />
+                <Icons.DarkMode onClick={() => onThemeChange("dark")} />
               ) : (
-                <Icons.LightMode onClick={() => setTheme("light")} />
+                <Icons.LightMode onClick={() => onThemeChange("light")} />
               )}
             </IconButton>
           </Box>
