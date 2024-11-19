@@ -8,18 +8,45 @@ import {
   deleteDoc,
   collection,
   getDocs,
+  query,
+  QueryFieldFilterConstraint,
+  addDoc,
 } from "firebase/firestore";
 
 export const DBService = {
-  // Create or Update (Upsert)
-  upsert: async ({
+  create: async <T>({
+    table,
+    payload,
+  }: {
+    table: string;
+    payload: { [x: string]: T };
+  }) => {
+    await addDoc(collection(db, table), payload);
+  },
+
+  // Update (Update specific fields in a document)
+  update: async <T>({
     table,
     id,
     payload,
   }: {
     table: string;
     id: string;
-    payload: any;
+    payload: { [x: string]: T };
+  }) => {
+    const docRef = doc(db, table, id);
+    await updateDoc(docRef, payload);
+  },
+
+  // Create or Update (Upsert)
+  upsert: async <T>({
+    table,
+    id,
+    payload,
+  }: {
+    table: string;
+    id: string;
+    payload: { [x: string]: T };
   }) => {
     await setDoc(doc(db, table, id), payload);
   },
@@ -35,25 +62,21 @@ export const DBService = {
     }
   },
 
-  // Read all documents in a collection
-  readAll: async ({ table }: { table: string }) => {
-    const collectionRef = collection(db, table);
-    const querySnapshot = await getDocs(collectionRef);
-    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  },
-
-  // Update (Update specific fields in a document)
-  update: async ({
+  // Read all documents in a collection according to the specified constraint
+  readAll: async ({
     table,
-    id,
-    payload,
+    q,
   }: {
     table: string;
-    id: string;
-    payload: any;
+    q: QueryFieldFilterConstraint;
   }) => {
-    const docRef = doc(db, table, id);
-    await updateDoc(docRef, payload);
+    const collectionRef = collection(db, table);
+    const collectionQuery = query(collectionRef, q);
+    const querySnapshot = await getDocs(collectionQuery);
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
   },
 
   // Delete (Remove a document)

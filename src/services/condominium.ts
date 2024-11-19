@@ -1,24 +1,13 @@
-import { auth, db } from "@/config/firebaseClient";
 import { uploadFile } from "@/utils/uploadFile";
-import {
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-} from "firebase/auth";
-import {
-  doc,
-  setDoc,
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { where } from "firebase/firestore";
+import { DBService } from "./db";
 
 export type TCondominuim = {
   name: string;
 };
 
 export type TFile = {
+  id: string;
   name: string;
   url: string;
   type: string;
@@ -28,8 +17,9 @@ export type TFile = {
 };
 
 export type TNewsletter = {
+  id: string;
   title: string;
-  descriptio: string;
+  description: string;
   url: string;
   condominium_id: string;
   created_at: string;
@@ -37,7 +27,7 @@ export type TNewsletter = {
 
 export const CondominiumService = {
   createOrUpdate: async (payload: TCondominuim, id: string) => {
-    await setDoc(doc(db, "condominiums", id), payload);
+    await DBService.upsert({ table: "condominiums", id, payload });
   },
 
   createNewsletter: async (
@@ -47,34 +37,29 @@ export const CondominiumService = {
   ) => {
     const url = await uploadFile(`${condominium_id}/images`, file);
 
-    const newsletterPayload = {
+    const payload: Omit<TNewsletter, "id"> = {
       ...newsletter,
       url,
       condominium_id,
       created_at: new Date().toISOString(),
     };
 
-    await addDoc(collection(db, "newsletter"), newsletterPayload);
+    await DBService.create({ table: "newsletter", payload });
   },
 
   listNewsletters: async (condominium_id: string) => {
-    const filesCollection = collection(db, "newsletter");
-    const q = query(
-      filesCollection,
-      where("condominium_id", "==", condominium_id)
-    );
-    const querySnapshot = await getDocs(q);
+    const newsletters = await DBService.readAll({
+      table: "newsletter",
+      q: where("condominium_id", "==", condominium_id),
+    });
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as TNewsletter), // Map Firestore documents to an object
-    }));
+    return newsletters as TNewsletter[];
   },
 
   createFile: async (condominium_id: string, file: File) => {
     const url = await uploadFile(`${condominium_id}/files`, file);
 
-    const fileMetadata: TFile = {
+    const payload: Omit<TFile, "id"> = {
       name: file.name,
       type: file.type,
       size: file.size,
@@ -83,20 +68,15 @@ export const CondominiumService = {
       created_at: new Date().toISOString(),
     };
 
-    await addDoc(collection(db, "files"), fileMetadata);
+    await DBService.create({ table: "files", payload });
   },
 
   listFiles: async (condominium_id: string) => {
-    const filesCollection = collection(db, "files");
-    const q = query(
-      filesCollection,
-      where("condominium_id", "==", condominium_id)
-    );
-    const querySnapshot = await getDocs(q);
+    const files = await DBService.readAll({
+      table: "files",
+      q: where("condominium_id", "==", condominium_id),
+    });
 
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as TFile), // Map Firestore documents to an object
-    }));
+    return files as TFile[];
   },
 };
