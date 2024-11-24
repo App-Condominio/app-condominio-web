@@ -1,4 +1,3 @@
-// services/authService.js
 import { db } from "@/config/firebaseClient";
 import {
   doc,
@@ -13,18 +12,21 @@ import {
   addDoc,
 } from "firebase/firestore";
 
+type Payload<T> = {
+  [x: string]: T;
+};
+
 export const DBService = {
   create: async <T>({
     table,
     payload,
   }: {
     table: string;
-    payload: { [x: string]: T };
+    payload: Payload<T>;
   }) => {
     await addDoc(collection(db, table), payload);
   },
 
-  // Update (Update specific fields in a document)
   update: async <T>({
     table,
     id,
@@ -32,13 +34,12 @@ export const DBService = {
   }: {
     table: string;
     id: string;
-    payload: { [x: string]: T };
+    payload: Payload<T>;
   }) => {
     const docRef = doc(db, table, id);
     await updateDoc(docRef, payload);
   },
 
-  // Create or Update (Upsert)
   upsert: async <T>({
     table,
     id,
@@ -46,7 +47,7 @@ export const DBService = {
   }: {
     table: string;
     id: string;
-    payload: { [x: string]: T };
+    payload: Payload<T>;
   }) => {
     await setDoc(doc(db, table, id), payload);
   },
@@ -79,7 +80,6 @@ export const DBService = {
     }));
   },
 
-  // Delete (Remove a document)
   delete: async ({ table, id }: { table: string; id: string }) => {
     const docRef = doc(db, table, id);
     await deleteDoc(docRef);

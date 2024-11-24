@@ -20,31 +20,36 @@ export type TNewsletter = {
   id: string;
   title: string;
   description: string;
-  url: string;
+  image_url: string | null;
   condominium_id: string;
   created_at: string;
 };
 
 export const CondominiumService = {
   createOrUpdate: async (payload: TCondominuim, id: string) => {
-    await DBService.upsert({ table: "condominiums", id, payload });
+    const newPayload = { ...payload, created_at: new Date().toISOString() };
+    await DBService.upsert({ table: "condominiums", id, payload: newPayload });
   },
 
   createNewsletter: async (
     condominium_id: string,
-    file: File,
+    file: File | null,
     newsletter: { title: string; description: string }
   ) => {
-    const url = await uploadFile(`${condominium_id}/images`, file);
-
-    const payload: Omit<TNewsletter, "id"> = {
+    let payload: Omit<TNewsletter, "id"> = {
       ...newsletter,
-      url,
+      image_url: null,
       condominium_id,
       created_at: new Date().toISOString(),
     };
 
+    if (file) {
+      const image_url = await uploadFile(`${condominium_id}/images`, file);
+      payload = { ...payload, image_url };
+    }
+
     await DBService.create({ table: "newsletter", payload });
+    return payload;
   },
 
   listNewsletters: async (condominium_id: string) => {
