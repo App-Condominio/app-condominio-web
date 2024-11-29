@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { CondominiumService, TNewsletter } from "@/services/condominium";
+import { NewsletterService, TNewsletter } from "@/services/newsletter";
 import {
   Box,
   Card,
@@ -15,6 +15,7 @@ import {
 
 import { useAuthListener } from "@/hooks/useAuth";
 import { sendPushNotification } from "@/utils/sendPushNotification";
+import { v4 as uuidv4 } from "uuid";
 
 export default function Newsletters() {
   const authUser = useAuthListener();
@@ -30,9 +31,7 @@ export default function Newsletters() {
     if (!authUser?.uid) return;
 
     try {
-      const newsletters = await CondominiumService.listNewsletters(
-        authUser.uid
-      );
+      const newsletters = await NewsletterService.list(authUser.uid);
       setNewsletters(newsletters);
     } catch (error) {
       console.error("Failed to fetch files:", error.message);
@@ -53,16 +52,12 @@ export default function Newsletters() {
       setIsCreatingNewsletters(true);
       setError("");
 
-      const payload = await CondominiumService.createNewsletter(
-        authUser.uid,
-        imageFile,
-        { title, description }
-      );
+      const payload = await NewsletterService.create(authUser.uid, imageFile, {
+        title,
+        description,
+      });
 
-      setNewsletters((prev) => [
-        ...prev,
-        { ...payload, id: Math.random().toString() },
-      ]);
+      setNewsletters((prev) => [...prev, { ...payload, id: uuidv4() }]);
 
       await sendPushNotification({
         token: "ExponentPushToken[iccr-DFkR16Trz1eL8DMhc]",

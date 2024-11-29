@@ -66,13 +66,13 @@ export const DBService = {
   // Read all documents in a collection according to the specified constraint
   readAll: async ({
     table,
-    q,
+    queries,
   }: {
     table: string;
-    q: QueryFieldFilterConstraint;
+    queries: QueryFieldFilterConstraint[];
   }) => {
     const collectionRef = collection(db, table);
-    const collectionQuery = query(collectionRef, q);
+    const collectionQuery = query(collectionRef, ...queries);
     const querySnapshot = await getDocs(collectionQuery);
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,

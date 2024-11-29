@@ -1,87 +1,17 @@
-import { uploadFile } from "@/utils/uploadFile";
-import { where } from "firebase/firestore";
 import { DBService } from "./db";
+import { Tables } from "@/constants";
 
 export type TCondominuim = {
   name: string;
 };
 
-export type TFile = {
-  id: string;
-  name: string;
-  url: string;
-  type: string;
-  size: number;
-  condominium_id: string;
-  created_at: string;
-};
-
-export type TNewsletter = {
-  id: string;
-  title: string;
-  description: string;
-  image_url: string | null;
-  condominium_id: string;
-  created_at: string;
-};
-
 export const CondominiumService = {
   createOrUpdate: async (payload: TCondominuim, id: string) => {
     const newPayload = { ...payload, created_at: new Date().toISOString() };
-    await DBService.upsert({ table: "condominiums", id, payload: newPayload });
-  },
-
-  createNewsletter: async (
-    condominium_id: string,
-    file: File | null,
-    newsletter: { title: string; description: string }
-  ) => {
-    let payload: Omit<TNewsletter, "id"> = {
-      ...newsletter,
-      image_url: null,
-      condominium_id,
-      created_at: new Date().toISOString(),
-    };
-
-    if (file) {
-      const image_url = await uploadFile(`${condominium_id}/images`, file);
-      payload = { ...payload, image_url };
-    }
-
-    await DBService.create({ table: "newsletter", payload });
-    return payload;
-  },
-
-  listNewsletters: async (condominium_id: string) => {
-    const newsletters = await DBService.readAll({
-      table: "newsletter",
-      q: where("condominium_id", "==", condominium_id),
+    await DBService.upsert({
+      table: Tables.Condominiums,
+      id,
+      payload: newPayload,
     });
-
-    return newsletters as TNewsletter[];
-  },
-
-  createFile: async (condominium_id: string, file: File) => {
-    const url = await uploadFile(`${condominium_id}/files`, file);
-
-    const payload: Omit<TFile, "id"> = {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      url,
-      condominium_id,
-      created_at: new Date().toISOString(),
-    };
-
-    await DBService.create({ table: "files", payload });
-  },
-
-  listFiles: async (condominium_id: string) => {
-    const files = await DBService.readAll({
-      table: "files",
-      q: where("condominium_id", "==", condominium_id),
-    });
-
-    return files as TFile[];
   },
 };

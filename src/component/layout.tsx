@@ -157,6 +157,11 @@ export default function Layout({
       icon: <Icons.UploadFile />,
     },
     {
+      title: "Agendamentos",
+      path: "/bookings",
+      icon: <Icons.CalendarViewMonth />,
+    },
+    {
       title: "Sair",
       path: null,
       trigger: () => handleSignOut(),
