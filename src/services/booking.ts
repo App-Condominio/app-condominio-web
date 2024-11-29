@@ -73,7 +73,7 @@ export const BookingService = {
       booking_advance_limit_days,
     } = resourceData;
 
-    if (start_time && resourcePeriod == "hourly" && bookingDate.isSame(now)) {
+    if (start_time && resourcePeriod === "hourly" && bookingDate.isSame(now)) {
       const bookingHour = Number(start_time.split(":")[0]);
       const currentHour = dayjs().hour();
 

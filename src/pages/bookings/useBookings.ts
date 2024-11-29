@@ -246,7 +246,10 @@ export function useBookings() {
       try {
         const allBookings = (await DBService.readAll({
           table: Tables.Bookings,
-          queries: [where("condominium_id", "==", authUser.uid)],
+          queries: [
+            where("condominium_id", "==", authUser.uid),
+            where("date", ">=", formatDate(new Date())),
+          ],
         })) as Booking[];
 
         const formattedBookings = allBookings.map((booking) => ({
