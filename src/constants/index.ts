@@ -15,3 +15,34 @@ export enum Tables {
   Events = "events",
   Bookings = "bookings",
 }
+
+export const WEEK_DAYS = [
+  {
+    label: "Segunda",
+    value: "Monday",
+  },
+  {
+    label: "Terça",
+    value: "Tuesday",
+  },
+  {
+    label: "Quarta",
+    value: "Wednesday",
+  },
+  {
+    label: "Quinta",
+    value: "Thursday",
+  },
+  {
+    label: "Sexta",
+    value: "Friday",
+  },
+  {
+    label: "Sábado",
+    value: "Saturday",
+  },
+  {
+    label: "Domingo",
+    value: "Sunday",
+  },
+];

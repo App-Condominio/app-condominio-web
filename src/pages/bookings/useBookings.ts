@@ -10,23 +10,11 @@ import { Tables } from "@/constants";
 import { formatDate } from "@/utils/formatDate";
 import { v4 as uuidv4 } from "uuid";
 import dayjs from "dayjs";
+import { TResource } from "@/services/resource";
 
 type User = {
   id: string;
   name: string;
-};
-
-type Resource = {
-  id: string;
-  name: string;
-  period: "daily" | "hourly";
-  booking_advance_limit_days: number | null;
-  availability: {
-    [dayOfWeek: string]: {
-      start: string;
-      end: string;
-    };
-  };
 };
 
 type Booking = Omit<TBooking, "date"> & {
@@ -45,9 +33,9 @@ export function useBookings() {
   const [isLoadingModalInfo, setIsLoadingModalInfo] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [resources, setResources] = useState<Resource[]>([]);
+  const [resources, setResources] = useState<TResource[]>([]);
   const [events, setEvents] = useState<TEvent[]>([]);
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(
+  const [selectedResource, setSelectedResource] = useState<TResource | null>(
     null
   );
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
@@ -73,7 +61,7 @@ export function useBookings() {
       const allResources = (await DBService.readAll({
         table: Tables.Resources,
         queries: [where("condominium_ids", "array-contains", authUser!.uid)],
-      })) as Resource[];
+      })) as TResource[];
 
       const allEvents = (await DBService.readAll({
         table: Tables.Events,
@@ -119,7 +107,7 @@ export function useBookings() {
     generateTimeSlots(selected);
   };
 
-  const generateTimeSlots = (selectedResource: Resource | null) => {
+  const generateTimeSlots = (selectedResource: TResource | null) => {
     if (!selectedResource || !selectedDate) {
       setTimeSlots([]);
       return;

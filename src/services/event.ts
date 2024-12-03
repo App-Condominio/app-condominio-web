@@ -12,44 +12,87 @@ import {
 } from "firebase/firestore";
 
 export type TEvent = {
-  id: string;
+  id?: string;
   condominium_id: string;
   resource_ids: string[];
   type: "daily" | "hourly";
   status: "closed" | "open";
-  date: string; // Data do evento (formato: "YYYY-MM-DD")
+  date: string | string[]; // Data(s) do evento (formato: "YYYY-MM-DD")
   start_time?: string | null; // Horário de início (formato: "HH:mm", obrigatório para eventos "hourly")
   end_time?: string | null; // Horário de término (formato: "HH:mm", obrigatório para eventos "hourly")
   created_at: string; // Data de criação do evento (formato ISO 8601)
   updated_at?: string | null; // Data da última atualização (formato ISO 8601, opcional)
 };
 
+const validateEvent = (event: TEvent) => {
+  if (event.type === "hourly" && (!event.start_time || !event.end_time)) {
+    throw new Error("Eventos 'hourly' precisam de 'start_time' e 'end_time'.");
+  }
+
+  if (
+    event.status === "open" &&
+    event.type === "daily" &&
+    (!event.start_time || !event.end_time)
+  ) {
+    throw new Error(
+      "Eventos 'open - daily' precisam de 'start_time' e 'end_time'."
+    );
+  }
+
+  if (event.resource_ids.length === 0) {
+    throw new Error("O evento deve estar associado a pelo menos um recurso.");
+  }
+};
+
 export const EventService = {
   create: async (event: TEvent) => {
-    // considerar evento como diário
-    // se tiver mais de um dia criar um evento para cada dia
-    // tipos de eventos aceitos ->
-    // closed - daily
-    // closed - hourly (precisa ter start_time e end_time)
-    // open - daily (precisa ter start_time e end_time, pois será em um dia que não está no schedule)
-    const eventRef = await addDoc(collection(db, Tables.Events), event);
-    return eventRef;
+    validateEvent(event);
+
+    // Se for um evento "daily" com múltiplas datas, cria eventos para cada dia
+    const eventDates = Array.isArray(event.date) ? event.date : [event.date];
+    const createdEvents = [];
+
+    for (const date of eventDates) {
+      const newEvent = {
+        ...event,
+        date,
+        created_at: new Date().toISOString(),
+      };
+
+      const eventRef = await addDoc(collection(db, Tables.Events), newEvent);
+      createdEvents.push({ id: eventRef.id, ...newEvent });
+    }
+
+    return createdEvents;
   },
 
-  list: async (condominiumId: string) => {
-    const eventsQuery = query(
+  list: async (condominiumId: string, resourceId?: string) => {
+    let eventsQuery = query(
       collection(db, Tables.Events),
       where("condominium_id", "==", condominiumId)
     );
+
+    if (resourceId) {
+      eventsQuery = query(
+        eventsQuery,
+        where("resource_ids", "array-contains", resourceId)
+      );
+    }
 
     const snapshot = await getDocs(eventsQuery);
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   },
 
-  update: async (eventId: string, updatedData: TEvent) => {
+  update: async (eventId: string, updatedData: Partial<TEvent>) => {
+    validateEvent({ ...updatedData, id: eventId } as TEvent);
+
     const eventDoc = doc(db, Tables.Events, eventId);
-    await updateDoc(eventDoc, updatedData);
-    return updatedData;
+    await updateDoc(eventDoc, {
+      ...updatedData,
+      updated_at: new Date().toISOString(),
+    });
+
+    return { id: eventId, ...updatedData };
   },
 
   delete: async (eventId: string) => {

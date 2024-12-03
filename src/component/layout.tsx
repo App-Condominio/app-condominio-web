@@ -157,6 +157,16 @@ export default function Layout({
       icon: <Icons.UploadFile />,
     },
     {
+      title: "Eventos",
+      path: "/events",
+      icon: <Icons.Event />,
+    },
+    {
+      title: "Áreas",
+      path: "/resources",
+      icon: <Icons.AddBusiness />,
+    },
+    {
       title: "Agendamentos",
       path: "/bookings",
       icon: <Icons.CalendarViewMonth />,
