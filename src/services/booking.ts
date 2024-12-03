@@ -45,7 +45,8 @@ export const BookingService = {
 
     const now = dayjs().startOf("day");
     const bookingDate = dayjs(date).startOf("day");
-    const dateString = formatDate(date);
+    const bookingDateString = formatDate(date);
+    const currentHour = dayjs().hour();
 
     if (bookingDate.isBefore(now)) {
       throw new Error(
@@ -75,7 +76,6 @@ export const BookingService = {
 
     if (start_time && resourcePeriod === "hourly" && bookingDate.isSame(now)) {
       const bookingHour = Number(start_time.split(":")[0]);
-      const currentHour = dayjs().hour();
 
       if (bookingHour <= currentHour) {
         throw new Error(
@@ -98,7 +98,7 @@ export const BookingService = {
         collection(db, Tables.Events),
         where("condominium_id", "==", condominium_id),
         where("resource_ids", "array-contains", resource_id),
-        where("date", "==", dateString)
+        where("date", "==", bookingDateString)
       )
     );
 
@@ -160,59 +160,52 @@ export const BookingService = {
       }
     }
 
-    if (resourcePeriod === "daily" && temporaryCloseEndTime) {
-      const bookingQuery = query(
+    const activeBookings = await getDocs(
+      query(
         collection(db, Tables.Bookings),
         where("condominium_id", "==", condominium_id),
         where("resource_id", "==", resource_id),
-        where("date", "==", dateString)
-      );
-
-      const existingBookings = await getDocs(bookingQuery);
-
-      if (!existingBookings.empty) {
-        throw new Error(
-          "Já existe um agendamento para este recurso neste dia."
-        );
-      }
-
-      await addDoc(collection(db, Tables.Bookings), {
-        condominium_id,
-        resource_id,
-        user_id,
-        user_name,
-        date: dateString,
-        start_time: null,
-        end_time: null,
-      });
-
-      return {
-        success: true,
-        message: `Agendamento criado com sucesso. O recurso estará disponível a partir das ${temporaryCloseEndTime}.`,
-      };
-    }
-
-    const bookingQuery = query(
-      collection(db, Tables.Bookings),
-      where("condominium_id", "==", condominium_id),
-      where("resource_id", "==", resource_id),
-      where("date", "==", dateString),
-      ...(resourcePeriod === "hourly"
-        ? [
-            where("start_time", "==", start_time),
-            where("end_time", "==", end_time),
-          ]
-        : [])
+        where("date", ">=", formatDate(new Date()))
+      )
     );
 
-    const existingBookings = await getDocs(bookingQuery);
+    for (const booking of activeBookings.docs) {
+      const {
+        user_id: activeBookingUserId,
+        date: activeBookingDate,
+        start_time: activeBookingStartTime,
+        end_time: activeBookingEndTime,
+      } = booking.data();
 
-    if (!existingBookings.empty) {
-      throw new Error(
-        resourcePeriod === "daily"
-          ? "Já existe um agendamento para este recurso neste dia."
-          : "Já existe um agendamento para este horário."
-      );
+      if (resourcePeriod === "daily") {
+        if (activeBookingUserId === user_id) {
+          throw new Error(
+            "Não é possível ter mais de um agendamento ativo para este recurso."
+          );
+        }
+
+        if (activeBookingDate === bookingDateString) {
+          throw new Error("Já existe um agendamento para este dia.");
+        }
+      }
+
+      if (resourcePeriod === "hourly") {
+        const bookingEndHour = Number(activeBookingEndTime.split(":")[0]);
+
+        if (activeBookingUserId === user_id && bookingEndHour >= currentHour) {
+          throw new Error(
+            "Não é possível ter mais de um agendamento ativo para este recurso."
+          );
+        }
+
+        if (
+          activeBookingDate === bookingDateString &&
+          activeBookingStartTime === start_time &&
+          activeBookingEndTime === end_time
+        ) {
+          throw new Error("Já existe um agendamento para este horário.");
+        }
+      }
     }
 
     await addDoc(collection(db, Tables.Bookings), {
@@ -220,11 +213,17 @@ export const BookingService = {
       resource_id,
       user_id,
       user_name,
-      date: dateString,
+      date: bookingDateString,
       start_time,
       end_time,
     });
 
-    return { success: true, message: "Agendamento criado com sucesso." };
+    return {
+      success: true,
+      message:
+        resourcePeriod === "daily" && temporaryCloseEndTime
+          ? `Agendamento criado com sucesso. O recurso estará disponível a partir das ${temporaryCloseEndTime}.`
+          : "Agendamento criado com sucesso.",
+    };
   },
 };
