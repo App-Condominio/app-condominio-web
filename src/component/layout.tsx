@@ -172,6 +172,11 @@ export default function Layout({
       icon: <Icons.CalendarViewMonth />,
     },
     {
+      title: "Enquetes",
+      path: "/polls",
+      icon: <Icons.Poll />,
+    },
+    {
       title: "Sair",
       path: null,
       trigger: () => handleSignOut(),

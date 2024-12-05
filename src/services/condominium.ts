@@ -6,12 +6,13 @@ export type TCondominuim = {
 };
 
 export const CondominiumService = {
-  createOrUpdate: async (payload: TCondominuim, id: string) => {
-    const newPayload = { ...payload, created_at: new Date().toISOString() };
-    await DBService.upsert({
-      table: Tables.Condominiums,
-      id,
-      payload: newPayload,
-    });
+  createOrUpdate: async (condominium: TCondominuim, id: string) => {
+    const payload = {
+      name: condominium.name,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    await DBService.upsert({ table: Tables.Condominiums, id, payload });
   },
 };

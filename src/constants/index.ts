@@ -14,6 +14,8 @@ export enum Tables {
   Newsletter = "newsletter",
   Events = "events",
   Bookings = "bookings",
+  Polls = "polls",
+  Votes = "polls_votes",
 }
 
 export const WEEK_DAYS = [

@@ -30,24 +30,32 @@ export type TResource = {
 };
 
 export const ResourceService = {
-  // Cria um novo recurso
-  create: async (resource: Omit<TResource, "id">) => {
+  create: async ({
+    name,
+    condominium_ids,
+    booking_advance_limit_days,
+    period,
+    availability,
+  }: Omit<TResource, "id">) => {
     if (
-      !resource.name ||
-      resource.condominium_ids.length === 0 ||
-      Object.keys(resource.availability).length === 0
+      !name ||
+      condominium_ids.length === 0 ||
+      Object.keys(availability).length === 0
     ) {
       throw new Error("Dados obrigatórios ausentes.");
     }
 
-    const newResource = {
-      ...resource,
+    const payload = {
+      name,
+      condominium_ids,
+      booking_advance_limit_days,
+      period,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
-    const docRef = await addDoc(collection(db, Tables.Resources), newResource);
-    return { id: docRef.id, ...newResource };
+    const docRef = await addDoc(collection(db, Tables.Resources), payload);
+    return { id: docRef.id, ...payload };
   },
 
   list: async (condominiumId: string) => {

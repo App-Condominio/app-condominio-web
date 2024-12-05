@@ -19,7 +19,8 @@ export const NewsletterService = {
     newsletter: { title: string; description: string }
   ) => {
     let payload: Omit<TNewsletter, "id"> = {
-      ...newsletter,
+      title: newsletter.title,
+      description: newsletter.description,
       image_url: null,
       condominium_id,
       created_at: new Date().toISOString(),

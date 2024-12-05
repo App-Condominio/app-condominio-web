@@ -54,9 +54,15 @@ export const EventService = {
 
     for (const date of eventDates) {
       const newEvent = {
-        ...event,
+        condominium_id: event.condominium_id,
+        resource_ids: event.resource_ids,
+        type: event.type,
+        status: event.status,
+        start_time: event.start_time,
+        end_time: event.end_time,
         date,
         created_at: new Date().toISOString(),
+        update_at: new Date().toISOString(),
       };
 
       const eventRef = await addDoc(collection(db, Tables.Events), newEvent);
